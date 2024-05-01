@@ -88,34 +88,42 @@ const startFileMonitor = (config, res) => {
 
   if (!fs.existsSync(path)) {
     console.error(`Error: The path "${path}" does not exist.`);
-    res.status(400).send("selected path doesn't exist"); // Return error message to frontend
+    res.status(400).send("Selected path doesn't exist");
     return;
   }
+
   if (currentWatcher) {
-    currentWatcher.close(); // Close existing watcher before starting a new one
+    currentWatcher.close(); // Close the existing watcher before starting a new one
   }
-  currentWatcher = chokidar.watch(path, { persistent: true, recursive: true });
+
+  currentWatcher = chokidar.watch(path, {
+    persistent: true,
+    recursive: true,
+    ignoreInitial: true, // Prevents initial events from being emitted
+  });
 
   currentWatcher.on("all", (eventType, filePath) => {
-    console.log(`File event: ${eventType} on ${filePath}`);
+    const eventTime = new Date(); // Get the current time
 
-    // Broadcast file events to WebSocket clients
+    console.log(`File event: ${eventType} on ${filePath} at ${eventTime}`);
+
+    // Broadcast file events to WebSocket clients, including timestamp
     broadcast({
       eventType,
       filePath,
+      eventTime, // Include the timestamp
     });
 
-    // Send email notification for specific file events
+    // Send email notification with timestamp for specific file events
     sendEmail(
       email,
       "File Event Notification",
-      `File ${eventType} on ${filePath}`
-    ); // Send email to the configured recipient
+      `File ${eventType} on ${filePath} at ${eventTime}`
+    );
   });
 
   console.log(`Monitoring ${path} with Chokidar.`);
 };
-
 // Endpoint to start monitoring
 app.post("/start", async (req, res) => {
   try {
