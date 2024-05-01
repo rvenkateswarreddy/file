@@ -18,7 +18,14 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 dotenv.config();
 app.use(express.json());
-app.use(cors({ origin: "*" }));
+const corsOptions = {
+  origin: "*", // Allow all origins; you can specify specific origins
+  methods: ["GET", "POST", "PUT", "DELETE"], // Allowed HTTP methods
+  allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
+};
+
+// Apply CORS middleware to all routes
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 let currentWatcher = null;
 // MongoDB connection
